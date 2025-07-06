@@ -35,8 +35,8 @@ def get_option_chain_data(symbol, api_key, date):
 Api_key_list = [ "5XPODGOOJYWCJZ2V", "02JAVMIS5Z2AJSTL","HJQUS4XUZ3WZTA7B","YVN79CFRSBAO3U1R"]
 api_key = Api_key_list[0]
 Ticker = "SPY"
-start_date = datetime.strptime("2024-03-31", "%Y-%m-%d")
-end_date = datetime.strptime("2024-4-10", "%Y-%m-%d")
+start_date = datetime.strptime("2024-04-04", "%Y-%m-%d")
+end_date = datetime.strptime("2024-05-03", "%Y-%m-%d")
 
 #%%
 # Track API key usage
