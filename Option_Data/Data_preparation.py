@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import json
 import pandas as pd
 import os
+from typing import Optional
 
 #%%
 def get_option_chain_data(symbol, api_key, date):
@@ -35,8 +36,8 @@ def get_option_chain_data(symbol, api_key, date):
 Api_key_list = [ "5XPODGOOJYWCJZ2V", "02JAVMIS5Z2AJSTL","HJQUS4XUZ3WZTA7B","YVN79CFRSBAO3U1R"]
 api_key = Api_key_list[0]
 Ticker = "SPY"
-start_date = datetime.strptime("2024-04-04", "%Y-%m-%d")
-end_date = datetime.strptime("2024-05-03", "%Y-%m-%d")
+start_date = datetime.strptime("2023-02-1", "%Y-%m-%d")
+end_date = datetime.strptime("2024-05-24", "%Y-%m-%d")
 
 #%%
 # Track API key usage
@@ -72,8 +73,8 @@ for i in range((end_date - start_date).days + 1):
         continue
     
     # Save the data if present
-    output_filename = f"Test_data/{Ticker}_options_{date.replace('-', '')}.json"
-    os.makedirs("Test_data", exist_ok=True)
+    output_filename = f"Training_data/{Ticker}_options_{date.replace('-', '')}.json"
+    os.makedirs("Training_data", exist_ok=True)
     
     with open(output_filename, "w", encoding="utf-8") as f:
         json.dump(option_chain, f, ensure_ascii=False, indent=4)
@@ -145,12 +146,91 @@ OHLCV_data['EMA_14'] = talib.EMA(OHLCV_data['close'], timeperiod=14)
 OHLCV_data['EMA_50'] = talib.EMA(OHLCV_data['close'], timeperiod=50)
 OHLCV_data['EMA_200'] = talib.EMA(OHLCV_data['close'], timeperiod=200)
 
+# generate SMA 5, 10, 20, 50, 100, 200
+OHLCV_data['SMA_5'] = talib.SMA(OHLCV_data['close'], timeperiod=5)
+OHLCV_data['SMA_10'] = talib.SMA(OHLCV_data['close'], timeperiod=10)
+OHLCV_data['SMA_20'] = talib.SMA(OHLCV_data['close'], timeperiod=20)
+OHLCV_data['SMA_50'] = talib.SMA(OHLCV_data['close'], timeperiod=50)
+OHLCV_data['SMA_100'] = talib.SMA(OHLCV_data['close'], timeperiod=100)
+OHLCV_data['SMA_200'] = talib.SMA(OHLCV_data['close'], timeperiod=200)
+
+# generate WMA 10, 20, 50
+OHLCV_data['WMA_10'] = talib.WMA(OHLCV_data['close'], timeperiod=10)
+OHLCV_data['WMA_20'] = talib.WMA(OHLCV_data['close'], timeperiod=20)
+OHLCV_data['WMA_50'] = talib.WMA(OHLCV_data['close'], timeperiod=50)
+
+# generate DEMA 10, 20, 50
+OHLCV_data['DEMA_10'] = talib.DEMA(OHLCV_data['close'], timeperiod=10)
+OHLCV_data['DEMA_20'] = talib.DEMA(OHLCV_data['close'], timeperiod=20)
+OHLCV_data['DEMA_50'] = talib.DEMA(OHLCV_data['close'], timeperiod=50)
+
+# generate TEMA 10, 20, 50
+OHLCV_data['TEMA_10'] = talib.TEMA(OHLCV_data['close'], timeperiod=10)
+OHLCV_data['TEMA_20'] = talib.TEMA(OHLCV_data['close'], timeperiod=20)
+OHLCV_data['TEMA_50'] = talib.TEMA(OHLCV_data['close'], timeperiod=50)
+
+# generate MA cross signals
+OHLCV_data['SMA_5_cross_SMA_20'] = np.where(OHLCV_data['SMA_5'] > OHLCV_data['SMA_20'], 1, 0)
+OHLCV_data['SMA_10_cross_SMA_50'] = np.where(OHLCV_data['SMA_10'] > OHLCV_data['SMA_50'], 1, 0)
+OHLCV_data['EMA_14_cross_EMA_50'] = np.where(OHLCV_data['EMA_14'] > OHLCV_data['EMA_50'], 1, 0)
+OHLCV_data['EMA_50_cross_EMA_200'] = np.where(OHLCV_data['EMA_50'] > OHLCV_data['EMA_200'], 1, 0)
+OHLCV_data['WMA_10_cross_WMA_50'] = np.where(OHLCV_data['WMA_10'] > OHLCV_data['WMA_50'], 1, 0)
+OHLCV_data['DEMA_10_cross_DEMA_50'] = np.where(OHLCV_data['DEMA_10'] > OHLCV_data['DEMA_50'], 1, 0)
+OHLCV_data['TEMA_10_cross_TEMA_50'] = np.where(OHLCV_data['TEMA_10'] > OHLCV_data['TEMA_50'], 1, 0)
+
 # generate VWAP
 # save the OHLCV data
-OHLCV_data.to_csv(f"Option_Data/Test_data/{Ticker}_OHLCV_data.csv", index=False)
+OHLCV_data.to_csv(f"Test_data/{Ticker}_OHLCV_data.csv", index=False)
 
 # %%
 
 OHLCV_data
 
+# %%
+
+def merge_option_chain_with_ohlcv(option_chain_folder: str, ohlcv_csv: str, output_folder: Optional[str] = None):
+    """
+    Merge option chain JSON files with OHLCV CSV data by date and output merged JSON files.
+    OHLCV data for each date is saved only once per file, and contracts reference their date.
+
+    Args:
+        option_chain_folder (str): Folder containing option chain JSON files.
+        ohlcv_csv (str): Path to OHLCV CSV file.
+        output_folder (str, optional): Folder to save merged JSON files. Defaults to option_chain_folder + '/merged'.
+    """
+    # Load OHLCV data
+    ohlcv_df = pd.read_csv(ohlcv_csv)
+    if 'date' in ohlcv_df.columns:
+        ohlcv_df['date'] = pd.to_datetime(ohlcv_df['date']).dt.strftime('%Y-%m-%d')
+    else:
+        raise ValueError('OHLCV CSV must have a "date" column.')
+    ohlcv_dict = ohlcv_df.set_index('date').to_dict(orient='index')
+
+    # Prepare output folder
+    if output_folder is None:
+        output_folder = os.path.join(option_chain_folder, 'merged')
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Process each option chain file
+    for filename in os.listdir(option_chain_folder):
+        if filename.endswith('.json') and not filename.startswith('._'):
+            with open(os.path.join(option_chain_folder, filename), 'r', encoding='utf-8') as f:
+                option_data = json.load(f)
+            contracts = option_data.get('data', [])
+            # Collect all unique dates in this file
+            dates_in_file = set(contract.get('date') for contract in contracts if contract.get('date') in ohlcv_dict)
+            # Build ohlcv sub-dictionary for only the dates present in this file
+            ohlcv_for_file = {date: ohlcv_dict[date] for date in dates_in_file}
+            # Save merged data
+            merged_filename = os.path.join(output_folder, f"merged_{filename}")
+            with open(merged_filename, 'w', encoding='utf-8') as f:
+                json.dump({'ohlcv': ohlcv_for_file, 'contracts': contracts}, f, ensure_ascii=False, indent=4)
+            print(f"Merged file saved: {merged_filename}")
+
+
+# Example usage
+merge_option_chain_with_ohlcv(
+    option_chain_folder="Test_data",
+    ohlcv_csv="Test_data/SPY_OHLCV_data.csv"
+) 
 # %%

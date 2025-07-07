@@ -12,7 +12,7 @@ import numpy as np
 # 中文：
 # 從 Option_Data/Test_data 目錄獲取所有 JSON 文件並合併成一個 pd DataFrame
 #%%
-folder = "Option_Data/Test_data"
+folder = "/Users/nigel/Documents/GitHub/Dynamic_Option_Hedging/Option_Data/Test_data"
 all_data = []
 
 # 遍歷文件夾中的所有 JSON 文件
