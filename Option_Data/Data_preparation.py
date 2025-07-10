@@ -36,8 +36,8 @@ def get_option_chain_data(symbol, api_key, date):
 Api_key_list = [ "5XPODGOOJYWCJZ2V", "02JAVMIS5Z2AJSTL","HJQUS4XUZ3WZTA7B","YVN79CFRSBAO3U1R"]
 api_key = Api_key_list[0]
 Ticker = "SPY"
-start_date = datetime.strptime("2024-05-27", "%Y-%m-%d")
-end_date = datetime.strptime("2024-06-30", "%Y-%m-%d")
+start_date = datetime.strptime("2024-05-25", "%Y-%m-%d")
+end_date = datetime.strptime("2024-07-05", "%Y-%m-%d")
 
 #%%
 # Track API key usage
@@ -46,13 +46,11 @@ request_count = 0
 max_requests_per_key = 25
 
 for i in range((end_date - start_date).days + 1):
-    # Check if we need to switch to next API key
-    if request_count >= max_requests_per_key:
-        api_key_index = (api_key_index + 1) % len(Api_key_list)
-        request_count = 0
-        print(f"Switching to API key {api_key_index + 1}")
-    
-    date = (start_date + timedelta(days=i)).strftime("%Y-%m-%d")
+    date_obj = start_date + timedelta(days=i)
+    # Skip weekends
+    if date_obj.weekday() >= 5:  # 5 = Saturday, 6 = Sunday
+        continue
+    date = date_obj.strftime("%Y-%m-%d")
     current_api_key = Api_key_list[api_key_index]
     option_chain = get_option_chain_data(Ticker, current_api_key, date)
     

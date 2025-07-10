@@ -15,6 +15,8 @@ from load_merged_data import load_merged_option_ohlcv
 # Load merged daily data (one row per date)
 df = load_merged_option_ohlcv()
 
+df.head()
+# %%
 # Drop rows with missing return (first day or missing data)
 df = df.dropna(subset=['return'])
 
@@ -45,6 +47,4 @@ model.fit(X_train, y_train)
 accuracy = accuracy_score(y_test, model.predict(X_test))
 print(f"Model accuracy: {accuracy:.4f}")
 
-# %%
-df.head()
 # %%
