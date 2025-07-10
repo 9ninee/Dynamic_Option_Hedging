@@ -36,8 +36,8 @@ def get_option_chain_data(symbol, api_key, date):
 Api_key_list = [ "5XPODGOOJYWCJZ2V", "02JAVMIS5Z2AJSTL","HJQUS4XUZ3WZTA7B","YVN79CFRSBAO3U1R"]
 api_key = Api_key_list[0]
 Ticker = "SPY"
-start_date = datetime.strptime("2023-02-1", "%Y-%m-%d")
-end_date = datetime.strptime("2024-05-24", "%Y-%m-%d")
+start_date = datetime.strptime("2024-05-27", "%Y-%m-%d")
+end_date = datetime.strptime("2024-06-30", "%Y-%m-%d")
 
 #%%
 # Track API key usage
@@ -83,8 +83,6 @@ for i in range((end_date - start_date).days + 1):
 
 #%%
 api_key = 'c4509040f3424118929aba59e24c696b'
-ticker_list = requests.get('https://api.twelvedata.com/stocks').json()
-ticker_list = pd.DataFrame(ticker_list['data'])
 interval = '1day'
 
 # Construct API URL with parameters for retrieving time series data
@@ -230,7 +228,7 @@ def merge_option_chain_with_ohlcv(option_chain_folder: str, ohlcv_csv: str, outp
 
 # Example usage
 merge_option_chain_with_ohlcv(
-    option_chain_folder="Test_data",
-    ohlcv_csv="Test_data/SPY_OHLCV_data.csv"
+    option_chain_folder="Training_data",
+    ohlcv_csv="Training_data/SPY_OHLCV_data.csv"
 ) 
 # %%
