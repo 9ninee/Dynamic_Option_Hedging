@@ -33,11 +33,11 @@ def get_option_chain_data(symbol, api_key, date):
     return data
 
 #%%
-Api_key_list = [ "02JAVMIS5Z2AJSTL", "5XPODGOOJYWCJZ2V","HJQUS4XUZ3WZTA7B","YVN79CFRSBAO3U1R"]
+Api_key_list = [ "5XPODGOOJYWCJZ2V", "02JAVMIS5Z2AJSTL","HJQUS4XUZ3WZTA7B","YVN79CFRSBAO3U1R"]
 api_key = Api_key_list[0]
 Ticker = "SPY"
-start_date = datetime.strptime("2024-07-02", "%Y-%m-%d")
-end_date = datetime.strptime("2024-08-07", "%Y-%m-%d")
+start_date = datetime.strptime("2017-01-01", "%Y-%m-%d")
+end_date = datetime.strptime("2025-07-10", "%Y-%m-%d")
 
 #%%
 # Track API key usage
@@ -50,6 +50,21 @@ for i in range((end_date - start_date).days + 1):
     # Skip weekends
     if date_obj.weekday() >= 5:  # 5 = Saturday, 6 = Sunday
         continue
+    
+    # Check if we need to switch API keys
+    if request_count >= max_requests_per_key:
+        print(f"\n=== API KEY SWITCH REQUIRED ===")
+        print(f"API key {api_key_index + 1} has reached {max_requests_per_key} requests.")
+        print(f"Please allocate the correct VPN for API key {api_key_index + 2}.")
+        print("Press Enter when ready to continue...")
+        input()  # Wait for user input
+        
+        # Switch to next API key
+        api_key_index = (api_key_index + 1) % len(Api_key_list)
+        request_count = 0
+        print(f"Switched to API key {api_key_index + 1}: {Api_key_list[api_key_index]}")
+        print("=" * 40)
+    
     date = date_obj.strftime("%Y-%m-%d")
     current_api_key = Api_key_list[api_key_index]
     option_chain = get_option_chain_data(Ticker, current_api_key, date)
@@ -76,9 +91,8 @@ for i in range((end_date - start_date).days + 1):
     
     with open(output_filename, "w", encoding="utf-8") as f:
         json.dump(option_chain, f, ensure_ascii=False, indent=4)
-        print(f"Option chain data for {Ticker} on {date} saved to {output_filename} (API key {api_key_index + 1}, request {request_count})")
+        print(f"Option chain data for {Ticker} on {date} saved to {output_filename} (API key {api_key_index + 1}, request {request_count}/{max_requests_per_key})")
     
-#%%
 
 
 #%%
