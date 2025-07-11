@@ -5,7 +5,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split, TimeSeriesSplit
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
-from xgboost import XGBClassifier, XGBRegressor
+# Remove xgboost import
+# from xgboost import XGBClassifier, XGBRegressor
 
 # %%
 # Add Option_Data to sys.path to import the loader
@@ -69,7 +70,7 @@ models = {
     'SVM': make_pipeline(StandardScaler(), SVC(random_state=42)),  # scale features
     'Gradient Boosting': GradientBoostingClassifier(random_state=42, max_depth=3),  # limit depth
     'KNN': make_pipeline(StandardScaler(), KNeighborsClassifier()),  # scale features
-    'XGBoost Classifier': XGBClassifier(random_state=42, use_label_encoder=False, eval_metric='logloss')
+    # 'XGBoost Classifier': XGBClassifier(random_state=42, use_label_encoder=False, eval_metric='logloss')
 }
 
 results = []
@@ -165,30 +166,63 @@ vol_split_idx = int(len(vol_X) * 0.8)
 vol_X_train, vol_X_test = vol_X.iloc[:vol_split_idx], vol_X.iloc[vol_split_idx:]
 vol_y_train, vol_y_test = vol_y.iloc[:vol_split_idx], vol_y.iloc[vol_split_idx:]
 
+# Add additional regressors for volatility prediction
+# (Make sure to install these packages if not already: pip install lightgbm catboost)
+from sklearn.ensemble import HistGradientBoostingRegressor
+try:
+    from lightgbm import LGBMRegressor
+except ImportError:
+    LGBMRegressor = None
+try:
+    from catboost import CatBoostRegressor
+except ImportError:
+    CatBoostRegressor = None
+
 # Train a regression model for volatility prediction
 vol_reg = RandomForestRegressor(random_state=42, n_estimators=100, max_depth=5)
-xgb_reg = XGBRegressor(random_state=42)
-vol_reg.fit(vol_X_train, vol_y_train)
-vol_pred = vol_reg.predict(vol_X_test)
-xgb_pred = xgb_reg.fit(vol_X_train, vol_y_train).predict(vol_X_test)
+hist_reg = HistGradientBoostingRegressor(random_state=42)
+if LGBMRegressor:
+    lgbm_reg = LGBMRegressor(random_state=42)
+if CatBoostRegressor:
+    cat_reg = CatBoostRegressor(verbose=0, random_state=42)
 
-# Evaluate regression
-mse = mean_squared_error(vol_y_test, vol_pred)
-r2 = r2_score(vol_y_test, vol_pred)
-xgb_mse = mean_squared_error(vol_y_test, xgb_pred)
-xgb_r2 = r2_score(vol_y_test, xgb_pred)
-print("\nVolatility Prediction (RandomForestRegressor, next 5-day realized volatility):")
-print(f"Test MSE: {mse:.6f}")
-print(f"Test R^2: {r2:.4f}")
+vol_reg.fit(vol_X_train, vol_y_train)
+hist_reg.fit(vol_X_train, vol_y_train)
+if LGBMRegressor:
+    lgbm_reg.fit(vol_X_train, vol_y_train)
+if CatBoostRegressor:
+    cat_reg.fit(vol_X_train, vol_y_train)
+
+vol_pred = vol_reg.predict(vol_X_test)
+hist_pred = hist_reg.predict(vol_X_test)
+if LGBMRegressor:
+    lgbm_pred = lgbm_reg.predict(vol_X_test)
+if CatBoostRegressor:
+    cat_pred = cat_reg.predict(vol_X_test)
+
+print(f"\nVolatility Prediction (RandomForestRegressor, next 5-day realized volatility):")
+print(f"Test MSE: {mean_squared_error(vol_y_test, vol_pred):.6f}")
+print(f"Test R^2: {r2_score(vol_y_test, vol_pred):.4f}")
 print("Sample predicted vs actual volatility:")
 print(pd.DataFrame({'Predicted': vol_pred[:10], 'Actual': vol_y_test.values[:10]}))
-print("\nVolatility Prediction (XGBoostRegressor, next 5-day realized volatility):")
-print(f"Test MSE: {xgb_mse:.6f}")
-print(f"Test R^2: {xgb_r2:.4f}")
-print("Sample predicted vs actual volatility:")
-print(pd.DataFrame({'Predicted': xgb_pred[:10], 'Actual': vol_y_test.values[:10]}))
+
+print(f"\nVolatility Prediction (HistGradientBoostingRegressor):")
+print(f"Test MSE: {mean_squared_error(vol_y_test, hist_pred):.6f}")
+print(f"Test R^2: {r2_score(vol_y_test, hist_pred):.4f}")
+
+if LGBMRegressor:
+    print(f"\nVolatility Prediction (LightGBM):")
+    print(f"Test MSE: {mean_squared_error(vol_y_test, lgbm_pred):.6f}")
+    print(f"Test R^2: {r2_score(vol_y_test, lgbm_pred):.4f}")
+
+if CatBoostRegressor:
+    print(f"\nVolatility Prediction (CatBoost):")
+    print(f"Test MSE: {mean_squared_error(vol_y_test, cat_pred):.6f}")
+    print(f"Test R^2: {r2_score(vol_y_test, cat_pred):.4f}")
 
 # %%
+
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
@@ -261,4 +295,5 @@ from sklearn.metrics import mean_squared_error, r2_score
 print('LSTM Volatility Test MSE:', mean_squared_error(reg_y_test, lstm_reg_pred))
 print('LSTM Volatility Test R2:', r2_score(reg_y_test, lstm_reg_pred))
 
+# %%
 # %%
