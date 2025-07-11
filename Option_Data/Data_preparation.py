@@ -33,11 +33,11 @@ def get_option_chain_data(symbol, api_key, date):
     return data
 
 #%%
-Api_key_list = [ "5XPODGOOJYWCJZ2V", "02JAVMIS5Z2AJSTL","HJQUS4XUZ3WZTA7B","YVN79CFRSBAO3U1R"]
+Api_key_list = [ "02JAVMIS5Z2AJSTL", "5XPODGOOJYWCJZ2V","HJQUS4XUZ3WZTA7B","YVN79CFRSBAO3U1R"]
 api_key = Api_key_list[0]
 Ticker = "SPY"
-start_date = datetime.strptime("2024-05-25", "%Y-%m-%d")
-end_date = datetime.strptime("2024-07-05", "%Y-%m-%d")
+start_date = datetime.strptime("2024-07-02", "%Y-%m-%d")
+end_date = datetime.strptime("2024-08-07", "%Y-%m-%d")
 
 #%%
 # Track API key usage
@@ -78,6 +78,8 @@ for i in range((end_date - start_date).days + 1):
         json.dump(option_chain, f, ensure_ascii=False, indent=4)
         print(f"Option chain data for {Ticker} on {date} saved to {output_filename} (API key {api_key_index + 1}, request {request_count})")
     
+#%%
+
 
 #%%
 api_key = 'c4509040f3424118929aba59e24c696b'
