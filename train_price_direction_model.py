@@ -37,7 +37,7 @@ df = df.dropna(subset=['return'])
 y = (df['return'] > 0).astype(int)
 
 # Use all numeric columns except 'return' as features
-feature_cols = df.select_dtypes(include='number').columns.difference(['return'])
+feature_cols = df.select_dtypes(include='number').columns.difference(['return','log_return'])
 X = df[feature_cols]
 
 # %%
@@ -51,13 +51,73 @@ print(f"Sample features: {X_train.head()}")
 print(f"Sample targets: {y_train.head()}")
 
 # %%
-# Train a simple logistic regression model
-model = LogisticRegression(random_state=42, max_iter=1000)
-model.fit(X_train, y_train)
+# Train and compare multiple models with feature scaling, cross-validation, and overfitting prevention
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import cross_val_score
+
+models = {
+    'Logistic Regression': LogisticRegression(random_state=42, max_iter=1000),
+    'Random Forest': RandomForestClassifier(random_state=42, max_depth=5),  # limit depth to prevent overfitting
+    'SVM': make_pipeline(StandardScaler(), SVC(random_state=42)),  # scale features
+    'Gradient Boosting': GradientBoostingClassifier(random_state=42, max_depth=3),  # limit depth
+    'KNN': make_pipeline(StandardScaler(), KNeighborsClassifier())  # scale features
+}
+
+results = []
+for name, model in models.items():
+    # Cross-validation (on training set)
+    cv_scores = cross_val_score(model, X_train, y_train, cv=5, scoring='accuracy')
+    model.fit(X_train, y_train)
+    test_acc = accuracy_score(y_test, model.predict(X_test))
+    results.append((name, cv_scores.mean(), test_acc))
+
+# Print results in a table
+print("\nModel Comparison (with CV and Test Accuracy):")
+print("{:<20} {:<15} {:<10}".format('Model', 'CV Accuracy', 'Test Acc'))
+for name, cv_acc, test_acc in results:
+    print("{:<20} {:.4f}         {:.4f}".format(name, cv_acc, test_acc))
 
 # %%
-# Evaluate the model
-accuracy = accuracy_score(y_test, model.predict(X_test))
-print(f"Model accuracy: {accuracy:.4f}")
+# Show feature importances for models that support it
+import numpy as np
 
+print("\nFeature Importances:")
+feature_names = list(feature_cols)
+
+# Logistic Regression (absolute value of coefficients)
+lr_model = models['Logistic Regression']
+if hasattr(lr_model, 'coef_'):
+    importances = np.abs(lr_model.coef_[0])
+    sorted_idx = np.argsort(importances)[::-1]
+    print("\nLogistic Regression (|coefficients|):")
+    print("{:<25} {:<10}".format('Feature', 'Importance'))
+    for idx in sorted_idx[:10]:
+        print(f"{feature_names[idx]:<25} {importances[idx]:.4f}")
+
+# Random Forest
+rf_model = models['Random Forest']
+if hasattr(rf_model, 'feature_importances_'):
+    importances = rf_model.feature_importances_
+    sorted_idx = np.argsort(importances)[::-1]
+    print("\nRandom Forest:")
+    print("{:<25} {:<10}".format('Feature', 'Importance'))
+    for idx in sorted_idx[:10]:
+        print(f"{feature_names[idx]:<25} {importances[idx]:.4f}")
+
+# Gradient Boosting
+gb_model = models['Gradient Boosting']
+if hasattr(gb_model, 'feature_importances_'):
+    importances = gb_model.feature_importances_
+    sorted_idx = np.argsort(importances)[::-1]
+    print("\nGradient Boosting:")
+    print("{:<25} {:<10}".format('Feature', 'Importance'))
+    for idx in sorted_idx[:10]:
+        print(f"{feature_names[idx]:<25} {importances[idx]:.4f}")
+
+# SVM and KNN do not provide feature importances
+print("\nSVM and KNN do not provide feature importances.")
 # %%
