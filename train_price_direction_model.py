@@ -5,13 +5,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split, TimeSeriesSplit
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
-# Remove xgboost import
-# from xgboost import XGBClassifier, XGBRegressor
-
-# %%
-# Add Option_Data to sys.path to import the loader
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../Option_Data')))
-from load_merged_data import load_merged_option_ohlcv
+from Option_Data.load_merged_data import load_merged_option_ohlcv
 
 # %%
 # Load merged daily data (one row per date)
